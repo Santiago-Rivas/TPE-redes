@@ -1,0 +1,102 @@
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  grafana_data: {}  # Volumen para persistir datos de Grafana
+  prometheus_data: {}  # Opcional: para persistir datos de Prometheus también
+
+services:
+  # Grafana
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana  # Persistencia de datos de Grafana
+    networks:
+      - monitoring
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus  # Persistencia de datos de Prometheus (opcional)
+    networks:
+      - monitoring
+
+  # Node Exporter for host1
+  host1-node-exporter:
+    image: prom/node-exporter
+    container_name: host1-node-exporter
+    ports:
+      - "9101:9100"
+    networks:
+      - monitoring
+
+  # Node Exporter for host2
+  host2-node-exporter:
+    image: prom/node-exporter
+    container_name: host2-node-exporter
+    ports:
+      - "9102:9100"
+    networks:
+      - monitoring
+
+  # Node Exporter for host3
+  host3-node-exporter:
+    image: prom/node-exporter
+    container_name: host3-node-exporter
+    ports:
+      - "9103:9100"
+    networks:
+      - monitoring
+
+  # Node Exporter for host4
+  host4-node-exporter:
+    image: prom/node-exporter
+    container_name: host4-node-exporter
+    ports:
+      - "9104:9100"
+    networks:
+      - monitoring
+
+  # Blackbox Exporter
+  blackbox-exporter:
+    image: prom/blackbox-exporter
+    container_name: blackbox-exporter
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./blackbox.yml:/etc/blackbox_exporter/config.yml
+    networks:
+      - monitoring
+
+  # Simulated Web Server (host 2)
+  web-service:
+    image: nginxdemos/hello
+    container_name: web-service
+    ports:
+      - "8080:80"
+    networks:
+      - monitoring
+
+  # Simulated API Service (host 3)
+  api-service:
+    image: tiangolo/uvicorn-gunicorn-fastapi:python3.8
+    container_name: api-service
+    environment:
+      - MODULE_NAME=main
+    volumes:
+      - ./api:/app
+    ports:
+      - "8001:80"
+    networks:
+      - monitoring

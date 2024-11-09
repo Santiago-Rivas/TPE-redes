@@ -1,0 +1,44 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  # Node Exporter for each host
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["host1-node-exporter:9100", "host2-node-exporter:9100", "host3-node-exporter:9100", "host4-node-exporter:9100"]
+
+  # Blackbox Exporter for HTTP services
+  - job_name: "blackbox"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - http://web-service:80  # Web service
+          - http://api-service:80  # API service
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115  # Blackbox Exporter's address
+
+  # Blackbox Exporter for SMTP service
+  - job_name: "blackbox-smtp"
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets:
+          - smtp-service:25  # Servicio SMTP
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
