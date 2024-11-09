@@ -3,7 +3,7 @@ networks:
     driver: bridge
 
 volumes:
-  grafana_data: {}  # Volumen para persistir datos de Grafana
+  grafana_data_real: {}  # Volumen para persistir datos de Grafana
   prometheus_data: {}  # Opcional: para persistir datos de Prometheus también
 
 services:
@@ -16,7 +16,7 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
-      - grafana_data:/var/lib/grafana  # Persistencia de datos de Grafana
+      - grafana_data_real:/var/lib/grafana  # Persistencia de datos de Grafana
     networks:
       - monitoring
 

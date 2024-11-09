@@ -28,17 +28,3 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter:9115  # Blackbox Exporter's address
-
-  # Blackbox Exporter for SMTP service
-  - job_name: "blackbox-smtp"
-    metrics_path: /probe
-    params:
-      module: [tcp_connect]
-    static_configs:
-      - targets:
-          - smtp-service:25  # Servicio SMTP
-    relabel_configs:
-      - source_labels: [__address__]
-        target_label: __param_target
-      - target_label: __address__
-        replacement: blackbox-exporter:9115
