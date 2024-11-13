@@ -1,5 +1,5 @@
 global:
-  scrape_interval: 15s
+  scrape_interval: 20s
 
 scrape_configs:
   # Prometheus itself
@@ -14,6 +14,7 @@ scrape_configs:
 
   # Blackbox Exporter for HTTP services
   - job_name: "blackbox"
+    scrape_timeout: 20s
     metrics_path: /probe
     params:
       module: [http_2xx]
@@ -21,6 +22,7 @@ scrape_configs:
       - targets:
           - http://web-service:80  # Web service
           - http://api-service:80  # API service
+          - http://delayed-api:80  # New delayed API service
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

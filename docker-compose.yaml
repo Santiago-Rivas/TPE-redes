@@ -100,3 +100,12 @@ services:
       - "8001:80"
     networks:
       - monitoring
+
+  delayed-api:
+    build:
+      context: ./delayed_api
+    container_name: delayed-api
+    ports:
+      - "8002:80"
+    networks:
+      - monitoring
