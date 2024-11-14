@@ -1,6 +1,3 @@
-global:
-  scrape_interval: 15s
-
 scrape_configs:
   # Prometheus itself
   - job_name: "prometheus"
@@ -12,19 +9,74 @@ scrape_configs:
     static_configs:
       - targets: ["host1-node-exporter:9100", "host2-node-exporter:9100", "host3-node-exporter:9100", "host4-node-exporter:9100"]
 
-  # Blackbox Exporter for HTTP services
+  # Blackbox Exporter for HTTP services (existing config)
   - job_name: "blackbox"
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
       - targets:
-          - http://web-service:80  # Web service
-          - http://api-service:80  # API service
+          - http://web-service:80
+          - http://api-service:80
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: blackbox-exporter:9115  # Blackbox Exporter's address
+        replacement: blackbox-exporter:9115
+
+  # Blackbox Exporter for individual URL checks
+  - job_name: "blackbox-status"
+    metrics_path: /probe
+    params:
+      module: [http_status]
+    static_configs:
+      - targets:
+          - http://api-service:80/status  # Web service for /status check
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: "blackbox-health"
+    metrics_path: /probe
+    params:
+      module: [http_health]
+    static_configs:
+      - targets:
+          - http://api-service:80/health  # Web service for /health check
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: "blackbox-metrics"
+    metrics_path: /probe
+    params:
+      module: [http_metrics]
+    static_configs:
+      - targets:
+          - http://api-service:80/metrics  # Web service for /metrics check
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: "mailhog"
+    static_configs:
+      - targets: ["mailhog-exporter:9114"]
+
+  - job_name: 'redis'
+    scrape_interval: 10ms
+    static_configs:
+      - targets: ['redis-exporter:9121']

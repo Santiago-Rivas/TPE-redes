@@ -5,6 +5,8 @@ networks:
 volumes:
   grafana_data_real: {}  # Volumen para persistir datos de Grafana
   prometheus_data: {}  # Opcional: para persistir datos de Prometheus también
+  dashboard_data: {}
+  redis_data: {}
 
 services:
   # Grafana
@@ -15,10 +17,40 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=mailhog:1025  # Point Grafana to MailHog SMTP
+      - GF_SMTP_USER=
+      - GF_SMTP_PASSWORD=
+      - GF_SMTP_FROM_ADDRESS=grafana@example.com
+      - GF_SMTP_FROM_NAME=Grafana Alerts
+      - GF_SMTP_SKIP_VERIFY=true
     volumes:
       - grafana_data_real:/var/lib/grafana  # Persistencia de datos de Grafana
     networks:
       - monitoring
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "8025:8025"  # Web UI for viewing emails
+      - "1025:1025"  # SMTP port for sending emails
+    networks:
+      - monitoring
+
+  mailhog-exporter:
+    build:
+      context: ./mailhog_exporter
+      dockerfile: Dockerfile  # We'll create a Dockerfile to run the Python script
+    container_name: mailhog-exporter
+    ports:
+      - "9114:9114"  # Expose the exporter metrics on port 9114
+    environment:
+      - MAILHOG_API_URL=http://mailhog:8025/api/v2  # API endpoint for MailHog's HTTP API
+    networks:
+      - monitoring
+    depends_on:
+      - mailhog
 
   # Prometheus
   prometheus:
@@ -100,3 +132,37 @@ services:
       - "8001:80"
     networks:
       - monitoring
+    command: >
+      /bin/bash -c "pip install redis && uvicorn main:app --host 0.0.0.0 --port 80"
+
+  nginx-dashboard:
+    image: nginx:latest
+    container_name: nginx-dashboard
+    ports:
+      - "8081:80"  # Expose the dashboard on http://localhost:8081
+    volumes:
+      - ./dashboard/index.html:/usr/share/nginx/html/index.html:ro  # Mount HTML file
+    networks:
+      - monitoring
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"  # Expose Redis on the default port
+    volumes:
+      - redis_data:/data  # Persist Redis data if needed
+    networks:
+      - monitoring
+
+
+  redis-exporter:
+    image: oliver006/redis_exporter
+    container_name: redis-exporter
+    environment:
+      - REDIS_ADDR=redis:6379
+    ports:
+      - "9121:9121"  # Expose Redis metrics on this port
+    networks:
+      - monitoring
+    depends_on:
+      - redis

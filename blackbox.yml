@@ -5,6 +5,34 @@ modules:
     http:
       valid_http_versions: ["HTTP/1.1", "HTTP/2"]
       method: GET
+
   tcp_connect:
     prober: tcp
     timeout: 5s
+
+  http_status:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+      method: GET
+      fail_if_body_not_matches_regexp:
+        - "{\"status\":\"up\"}"
+
+  http_health:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+      method: GET
+      fail_if_body_not_matches_regexp:
+        - "{\"health\":\"ok\"}"
+
+  http_metrics:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+      method: GET
+      fail_if_body_not_matches_regexp:
+        - "{\"metrics\":\"data\"}"
